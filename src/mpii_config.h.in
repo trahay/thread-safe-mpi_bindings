@@ -44,10 +44,13 @@
 #endif
 
 #define SETTINGS_VERBOSE_DEFAULT 0
+#define SETTINGS_SHOW_DEFAULT 0
+#define SETTINGS_FORCE_THREAD_SAFETY_DEFAULT 0
+#define SETTINGS_DISABLE_THREAD_SAFETY_DEFAULT 0
 
 struct mpii_settings {
   int verbose;
-
+  int show;
   int force_thread_safety;
   int disable_thread_safety;
 };

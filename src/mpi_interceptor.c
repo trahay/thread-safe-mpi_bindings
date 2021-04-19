@@ -21,7 +21,7 @@ static struct argp_option options[] = {
 	{"verbose", 'v', 0, 0, "Produce verbose output" },
 	{"force", 'f', 0, 0, "Force the use of thread-safety (even if MPI already supports it)" },
 	{"disable", 'd', 0, 0, "Disable the use of thread-safety" },
-
+	{"show", 's', 0, 0, "Show the LD_PRELOAD command to run the application with instrumentation" },
 	{0}
 };
 
@@ -33,6 +33,9 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
   switch(key) {
   case 'v':
     settings->verbose = 1;
+    break;
+  case 's':
+    settings->show = 1;
     break;
   case 'f':
     settings->force_thread_safety = 1;
@@ -62,6 +65,9 @@ int main(int argc, char**argv) {
   
   // Default values
   settings.verbose = SETTINGS_VERBOSE_DEFAULT;
+  settings.show = SETTINGS_SHOW_DEFAULT;
+  settings.force_thread_safety = SETTINGS_FORCE_THREAD_SAFETY_DEFAULT;
+  settings.disable_thread_safety = SETTINGS_DISABLE_THREAD_SAFETY_DEFAULT;
 
   // first divide argv between mpii options and target file and
   // options optionnal todo : better target detection : it should be
@@ -99,7 +105,24 @@ int main(int argc, char**argv) {
   }while(0)
   
   setenv_int("MPII_VERBOSE", settings.verbose, 1);
-  
+  setenv_int("MPII_FORCE_THREAD_SAFETY", settings.force_thread_safety, 1);
+  setenv_int("MPII_DISABLE_THREAD_SAFETY", settings.disable_thread_safety, 1);
+
+
+  if(settings.show) {
+    setenv("LD_PRELOAD", ld_preload, 1);
+    printf("LD_PRELOAD=%s MPII_VERBOSE=%d MPII_FORCE_THREAD_SAFETY=%d MPII_DISABLE_THREAD_SAFETY=%d",
+	   ld_preload,
+	   settings.verbose,
+	   settings.force_thread_safety,
+	   settings.disable_thread_safety);;
+
+    for(int i=target_i; i<argc; i++)
+      printf(" %s", argv[i]);
+    printf("\n");
+    return EXIT_SUCCESS;    
+  }
+
   extern char** environ;
   int ret;
   if (target_argv != NULL) {

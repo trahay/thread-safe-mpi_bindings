@@ -40,7 +40,7 @@ static int MPI_Send_core(CONST void* buf,
     MPI_Isend(buf, count, datatype, dest, tag, comm, &req);
     ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
   } else {
-    int ret = libMPI_Send(buf, count, datatype, dest, tag, comm);
+    ret = libMPI_Send(buf, count, datatype, dest, tag, comm);
   }
 
   return ret;
