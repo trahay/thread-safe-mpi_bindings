@@ -32,10 +32,10 @@ The following options can be passed to MPI Interceptor:
   + Set verbosity level (default level: 0)
 - `-f` or `--force`
   + Force thread-safety (default: disabled) -- Even if the MPI implementation does provide MPI_THREAD_MULTIPLE, or if the application does not need MPI_THREAD_MULTIPLE, this option provides thread-safety. It can be used for testing the library
-
 - `-d` or `--disable`
   + Disable thread-safety (default: no) -- Disable the library thread-safety mecanism. It can be used for testing the library instrumentation.
-
+- `-s` or `--show`
+  + Show the LD_PRELOAD command to run the application with instrumentation (default: no)
 
 
 ## Status of the current implementation
