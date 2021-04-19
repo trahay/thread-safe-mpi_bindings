@@ -38,6 +38,14 @@ The following options can be passed to MPI Interceptor:
   + Show the LD_PRELOAD command to run the application with instrumentation (default: no)
 
 
+
+If you need to tweak the environment, you can also run `mpi_interceptor -s` in order to get the environment variables that need to be set to use the tool:
+
+```
+$mpi_interceptor -s  ./mpi_ring_mt
+LD_PRELOAD=/home/trahay/Soft/opt/thread-safe-mpi_bindings/install/lib/libmpi-interceptor.so MPII_VERBOSE=0 MPII_FORCE_THREAD_SAFETY=0 MPII_DISABLE_THREAD_SAFETY=0 ./mpi_ring_mt
+```
+
 ## Status of the current implementation
 
 The current implementation intercepts the following functions and make them thread-safe:
