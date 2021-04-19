@@ -22,6 +22,9 @@
 
 #include <mpi.h>
 
+int should_lock = 0;
+pthread_mutex_t mpi_lock;
+
 struct mpii_info mpii_infos; /* information on the local process */
 
 /* pointers to actual MPI functions (C version)  */
@@ -435,6 +438,14 @@ void __mpi_init_generic() {
 int MPI_Init_thread(int* argc, char*** argv, int required, int* provided) {
   INTERCEPT_FUNCTION("MPI_Init_thread", libMPI_Init_thread);
   int ret = libMPI_Init_thread(argc, argv, required, provided);
+
+  if(required == MPI_THREAD_MULITPLE && *provided != MPI_THREAD_MULITPLE) {
+    /* The application needs MPI_THREAD_MULTIPLE, but the implementation does not support it */
+    should_lock = 1 ;
+    pthread_mutex_init(&mpi_lock, NULL);
+    *provided = required;
+  }
+
   __mpi_init_generic();
   return ret;
 }
@@ -451,42 +462,54 @@ int MPI_Comm_disconnect(MPI_Comm* comm) {
 
 int MPI_Comm_free(MPI_Comm* comm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Comm_free(comm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
 
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm* newcomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Comm_create(comm, group, newcomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
 
 int MPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm* newcomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Comm_create_group(comm, group, tag, newcomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
 
 int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm* newcomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Comm_split(comm, color, key, newcomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
 
 int MPI_Comm_dup(MPI_Comm comm, MPI_Comm* newcomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Comm_dup(comm, newcomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
 
 int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm* newcomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Comm_dup_with_info(comm, info, newcomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
@@ -494,7 +517,9 @@ int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm* newcomm) {
 int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
                         MPI_Comm* newcomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Comm_split_type(comm, split_type, key, info, newcomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
@@ -503,22 +528,28 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
                          MPI_Comm peer_comm, int remote_leader, int tag,
                          MPI_Comm* newintercomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Intercomm_create(local_comm, local_leader, peer_comm,
                                     remote_leader, tag, newintercomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
 
 int MPI_Intercomm_merge(MPI_Comm intercomm, int high, MPI_Comm* newintracomm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Intercomm_merge(intercomm, high, newintracomm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
 
 int MPI_Cart_sub(MPI_Comm old_comm, CONST int* belongs, MPI_Comm* new_comm) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Cart_sub(old_comm, belongs, new_comm);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
@@ -526,8 +557,10 @@ int MPI_Cart_sub(MPI_Comm old_comm, CONST int* belongs, MPI_Comm* new_comm) {
 int MPI_Cart_create(MPI_Comm comm_old, int ndims, CONST int* dims,
                     CONST int* periods, int reorder, MPI_Comm* comm_cart) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Cart_create(comm_old, ndims, dims, periods, reorder,
                                comm_cart);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
@@ -535,8 +568,10 @@ int MPI_Cart_create(MPI_Comm comm_old, int ndims, CONST int* dims,
 int MPI_Graph_create(MPI_Comm comm_old, int nnodes, CONST int* index,
                      CONST int* edges, int reorder, MPI_Comm* comm_graph) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Graph_create(comm_old, nnodes, index, edges, reorder,
                                 comm_graph);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
@@ -552,8 +587,10 @@ int MPI_Dist_graph_create(MPI_Comm comm_old,
                           MPI_Comm* comm_dist_graph) {
 
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Dist_graph_create(comm_old, n, sources, degrees, destinations,
                                      weights, info, reorder, comm_dist_graph);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
@@ -569,10 +606,12 @@ int MPI_Dist_graph_create_adjacent(MPI_Comm comm_old,
                                    int reorder,
                                    MPI_Comm* comm_dist_graph) {
   FUNCTION_ENTRY;
+  LOCK();
   int ret = libMPI_Dist_graph_create_adjacent(comm_old, indegree, sources,
                                               sourceweights, outdegree,
                                               destinations, destweights, info,
                                               reorder, comm_dist_graph);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }
