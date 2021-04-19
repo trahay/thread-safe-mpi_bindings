@@ -37,7 +37,14 @@ static int MPI_Recv_core(void* buf,
 			 int tag,
 			 MPI_Comm comm,
 			 MPI_Status* status) {
-  return libMPI_Recv(buf, count, datatype, source, tag, comm, status);
+  if(should_lock) {
+    MPI_Request req;
+    MPI_Irecv(buf, count, datatype, source, tag, comm, &req);
+    int ret = MPI_Wait(&req, status);
+    return ret;
+  } else {
+    return libMPI_Recv(buf, count, datatype, source, tag, comm, status);
+  }
 }
 
 

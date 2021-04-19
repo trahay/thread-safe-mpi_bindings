@@ -23,7 +23,10 @@
 static int MPI_Test_core(MPI_Request* req,
 			 int* a,
 			 MPI_Status* s) {
-  return libMPI_Test(req, a, s);
+  LOCK();
+  int ret = libMPI_Test(req, a, s);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Test_epilog(MPI_Fint* req MAYBE_UNUSED,

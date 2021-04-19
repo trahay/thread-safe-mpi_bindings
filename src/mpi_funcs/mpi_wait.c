@@ -26,7 +26,29 @@ static void MPI_Wait_prolog(MPI_Fint* req MAYBE_UNUSED,
 }
 
 static int MPI_Wait_core(MPI_Request* req, MPI_Status* s) {
-  return libMPI_Wait(req, s);
+  if(should_lock) {
+    /* MPI_Wait is blocking. So we should not call it while holding the lock.
+     * Replace MPI_Wait with an active waiting
+     */
+    uint64_t count = 0;
+    while(1) {
+      int ret = 0;
+      int flag;
+      ret = MPI_Test(req, &flag, s);
+      if(flag)
+	return ret;
+      count++;
+
+      if(count > 10) {      /* sleep a little bit to decrease contention */
+	sched_yield();
+      } else if (count > 100){
+	/* sleep even more */
+	usleep(10);
+      }
+    }
+  } else {
+    return libMPI_Wait(req, s);
+  }
 }
 
 

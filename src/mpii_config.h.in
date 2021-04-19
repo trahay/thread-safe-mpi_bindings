@@ -47,6 +47,9 @@
 
 struct mpii_settings {
   int verbose;
+
+  int force_thread_safety;
+  int disable_thread_safety;
 };
 
 #define STRING_LENGTH 4096

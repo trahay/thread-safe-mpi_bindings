@@ -34,7 +34,16 @@ static int MPI_Send_core(CONST void* buf,
                          int dest,
 			 int tag,
 			 MPI_Comm comm) {
-  return libMPI_Send(buf, count, datatype, dest, tag, comm);
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    MPI_Isend(buf, count, datatype, dest, tag, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    int ret = libMPI_Send(buf, count, datatype, dest, tag, comm);
+  }
+
+  return ret;
 }
 
 

@@ -437,15 +437,38 @@ void __mpi_init_generic() {
 
 int MPI_Init_thread(int* argc, char*** argv, int required, int* provided) {
   INTERCEPT_FUNCTION("MPI_Init_thread", libMPI_Init_thread);
-  int ret = libMPI_Init_thread(argc, argv, required, provided);
-
-  if(required == MPI_THREAD_MULITPLE && *provided != MPI_THREAD_MULITPLE) {
-    /* The application needs MPI_THREAD_MULTIPLE, but the implementation does not support it */
+  int ret = -1;
+  if(mpii_infos.settings.force_thread_safety) {
+    /* even if the MPI implementation supports thread-safety, disable it and use ours */
+    ret = libMPI_Init_thread(argc, argv, MPI_THREAD_SERIALIZED, provided);
     should_lock = 1 ;
     pthread_mutex_init(&mpi_lock, NULL);
     *provided = required;
+    printf("[MPII] MPI custom thread-safety: FORCED\n");
+      goto next;
+  } else {
+    ret = libMPI_Init_thread(argc, argv, required, provided);
+    if(mpii_infos.settings.disable_thread_safety == 1) {
+      printf("[MPII] MPI custom thread-safety: DISABLED\n");
+      goto next;
+    }
+
+    if(required == MPI_THREAD_MULTIPLE && *provided != MPI_THREAD_MULTIPLE) {
+      /* The application needs MPI_THREAD_MULTIPLE, but the implementation does not support it */
+      should_lock = 1 ;
+      pthread_mutex_init(&mpi_lock, NULL);
+      *provided = required;
+      printf("[MPII] MPI custom thread-safety: ON\n");
+    } else {
+      if(required == MPI_THREAD_MULTIPLE) {
+	printf("[MPII] MPI does support MPI_THREAD_MULTIPLE.\n");
+      } else {
+	printf("[MPII] The application does not need MPI_THREAD_MULTIPLE\n");
+      }
+    }
   }
 
+ next:
   __mpi_init_generic();
   return ret;
 }
@@ -868,6 +891,24 @@ static void load_settings() {
   if(mpii_verbose) {
     mpii_infos.settings.verbose = atoi(mpii_verbose);
     printf("[MPII] Debug level: %d\n", mpii_infos.settings.verbose);
+  }
+
+  char* mpii_force_thread_safety = getenv("MPII_FORCE_THREAD_SAFETY");
+  if(mpii_force_thread_safety) {
+    mpii_infos.settings.force_thread_safety = atoi(mpii_force_thread_safety);
+    printf("[MPII] Force thread-safety: %d\n", mpii_infos.settings.force_thread_safety);
+  }
+
+  char* mpii_disable_thread_safety = getenv("MPII_DISABLE_THREAD_SAFETY");
+  if(mpii_disable_thread_safety) {
+    mpii_infos.settings.disable_thread_safety = atoi(mpii_disable_thread_safety);
+    printf("[MPII] Disable thread-safety: %d\n", mpii_infos.settings.disable_thread_safety);
+  }
+
+  if( mpii_infos.settings.force_thread_safety &&
+      mpii_infos.settings.disable_thread_safety) {
+    fprintf(stderr, "Error: option MPII_FORCE_THREAD_SAFETY conflicts with MPII_DISABLE_THREAD_SAFETY\n");
+    abort();
   }
 }
 

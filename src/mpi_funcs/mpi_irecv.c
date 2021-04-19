@@ -36,7 +36,10 @@ static int MPI_Irecv_core(void* buf,
                           int tag,
 			  MPI_Comm comm,
 			  MPI_Request* req) {
-  return libMPI_Irecv(buf, count, datatype, src, tag, comm, req);
+  LOCK();
+  int ret = libMPI_Irecv(buf, count, datatype, src, tag, comm, req);
+  UNLOCK();
+  return ret;
 }
 
 

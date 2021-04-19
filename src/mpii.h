@@ -8,12 +8,14 @@
 #include <mpi.h>
 #include "mpii_macros.h"
 #include "mpii_config.h"
-
+#include <pthread.h>
 
 extern int should_lock;
 extern pthread_mutex_t mpi_lock;
-#define LOCK() do {\
-    if(should_lock) pthread_mutex_lock(&mpi_lock);	\
+#define LOCK() do {				\
+    if(should_lock) {				\
+      pthread_mutex_lock(&mpi_lock);		\
+    }						\
   } while(0)
 
 #define UNLOCK() do {					\
