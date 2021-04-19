@@ -38,7 +38,10 @@ static int MPI_Ireduce_scatter_core(CONST void* sendbuf,
 				    MPI_Op op,
 				    MPI_Comm comm,
                                     MPI_Request* r) {
-  return libMPI_Ireduce_scatter(sendbuf, recvbuf, recvcnts, datatype, op, comm, r);
+  LOCK();
+  int ret = libMPI_Ireduce_scatter(sendbuf, recvbuf, recvcnts, datatype, op, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Ireduce_scatter_epilog(CONST void* sendbuf  MAYBE_UNUSED,

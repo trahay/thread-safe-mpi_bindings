@@ -47,8 +47,12 @@ static int MPI_Sendrecv_core(CONST void* sendbuf,
 			     int recvtag,
 			     MPI_Comm comm,
 			     MPI_Status* status) {
-  return libMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
+  LOCK();
+  /* Warning: this may lead to a deadlock */
+  int ret = libMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
                          recvcount, recvtype, src, recvtag, comm, status);
+  UNLOCK();
+  return ret;
 }
 
 

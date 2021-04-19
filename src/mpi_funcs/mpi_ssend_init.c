@@ -27,7 +27,10 @@ static int MPI_Ssend_init_core(CONST void* buffer,
 			       int tag,
 			       MPI_Comm comm,
                                MPI_Request* req) {
-  return libMPI_Ssend_init(buffer, count, type, dest, tag, comm, req);
+  LOCK();
+  int ret = libMPI_Ssend_init(buffer, count, type, dest, tag, comm, req);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Ssend_init_epilog(CONST void* buffer MAYBE_UNUSED,

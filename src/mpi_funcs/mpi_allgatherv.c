@@ -39,8 +39,17 @@ static int MPI_Allgatherv_core(CONST void* sendbuf,
                                CONST int* displs,
                                MPI_Datatype recvtype,
                                MPI_Comm comm) {
-  return libMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
-                           displs, recvtype, comm);
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Iallgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
+		       displs, recvtype, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
+			    displs, recvtype, comm);
+  }
+  return ret;
 }
 
 static void MPI_Allgatherv_epilog(CONST void* sendbuf MAYBE_UNUSED,

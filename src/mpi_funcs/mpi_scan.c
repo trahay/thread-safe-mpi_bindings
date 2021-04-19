@@ -35,7 +35,15 @@ static int MPI_Scan_core(CONST void* sendbuf,
 			 MPI_Datatype datatype,
 			 MPI_Op op,
 			 MPI_Comm comm) {
-  return libMPI_Scan(sendbuf, recvbuf, count, datatype, op, comm);
+  int ret;
+  if(should_lock) {
+    MPI_Request req;
+    ret = libMPI_Iscan(sendbuf, recvbuf, count, datatype, op, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Scan(sendbuf, recvbuf, count, datatype, op, comm);
+  }
+  return ret;  
 }
 
 

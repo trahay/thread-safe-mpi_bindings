@@ -34,8 +34,16 @@ static int MPI_Rsend_core(CONST void* buf,
 			  int dest,
 			  int tag,
 			  MPI_Comm comm) {
-  return libMPI_Rsend(buf, count, datatype, dest, tag, comm);
-}
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Irsend(buf, count, datatype, dest, tag, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Rsend(buf, count, datatype, dest, tag, comm);
+  }
+  return ret;
+  }
 
 
 static void MPI_Rsend_epilog(CONST void* buf  MAYBE_UNUSED,

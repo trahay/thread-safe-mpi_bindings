@@ -40,9 +40,18 @@ static int MPI_Scatterv_core(CONST void* sendbuf,
                              MPI_Datatype recvtype,
                              int root,
                              MPI_Comm comm) {
-  return libMPI_Scatterv(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt,
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Iscatterv(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt,
+		     recvtype, root, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Scatterv(sendbuf, sendcnts, displs, sendtype, recvbuf, recvcnt,
                          recvtype, root, comm);
-}
+  }
+  return ret;
+  }
 
 
 static void MPI_Scatterv_epilog(CONST void* sendbuf  MAYBE_UNUSED,

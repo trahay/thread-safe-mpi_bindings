@@ -42,7 +42,10 @@ static int MPI_Iscatter_core(CONST void* sendbuf,
 			     int root,
 			     MPI_Comm comm,
 			     MPI_Request* r) {
-  return libMPI_Iscatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, r);
+  LOCK();
+  int ret = libMPI_Iscatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype, root, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Iscatter_epilog(CONST void* sendbuf  MAYBE_UNUSED,

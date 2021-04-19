@@ -39,8 +39,12 @@ static int MPI_Put_core(CONST void* origin_addr,
 			int target_count,
                         MPI_Datatype target_datatype,
 			MPI_Win win) {
-  return libMPI_Put(origin_addr, origin_count, origin_datatype, target_rank,
+  LOCK();
+  /* warning. MPI_Put is blocking, so this may lead to a deadlock */
+  int ret = libMPI_Put(origin_addr, origin_count, origin_datatype, target_rank,
                     target_disp, target_count, target_datatype, win);
+  UNLOCK();
+  return ret;
 }
 
 

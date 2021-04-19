@@ -25,7 +25,10 @@ static int MPI_Testany_core(int count,
 			    int* index,
 			    int* flag,
                             MPI_Status* status) {
-  return libMPI_Testany(count, reqs, index, flag, status);
+  LOCK();
+  int ret = libMPI_Testany(count, reqs, index, flag, status);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Testany_epilog(int count  MAYBE_UNUSED,

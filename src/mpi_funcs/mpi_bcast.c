@@ -33,7 +33,15 @@ static int MPI_Bcast_core(void* buffer,
 			  MPI_Datatype datatype,
                           int root,
 			  MPI_Comm comm) {
-  return libMPI_Bcast(buffer, count, datatype, root, comm);
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Ibcast(buffer, count, datatype, root, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Bcast(buffer, count, datatype, root, comm);
+  }
+  return ret;
 }
 
 

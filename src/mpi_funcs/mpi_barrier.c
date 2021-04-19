@@ -24,7 +24,15 @@ static void MPI_Barrier_prolog(MPI_Comm c MAYBE_UNUSED) {
 }
 
 static int MPI_Barrier_core(MPI_Comm c) {
-  return libMPI_Barrier(c);
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Ibarrier(c, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Barrier(c);
+  }
+  return ret;
 }
 
 static void MPI_Barrier_epilog(MPI_Comm c MAYBE_UNUSED) {

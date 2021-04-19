@@ -27,7 +27,10 @@ static void MPI_Startall_prolog(int count MAYBE_UNUSED,
 
 static int MPI_Startall_core(int count,
 			     MPI_Request* req) {
-  return libMPI_Startall(count, req);
+  LOCK();
+  int ret = libMPI_Startall(count, req);
+  UNLOCK();
+  return ret;
 }
 
 int MPI_Startall(int count,

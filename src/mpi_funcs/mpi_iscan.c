@@ -39,7 +39,10 @@ static int MPI_Iscan_core(CONST void* sendbuf,
                           MPI_Op op,
 			  MPI_Comm comm,
                           MPI_Request* r) {
-  return libMPI_Iscan(sendbuf, recvbuf, count, datatype, op, comm, r);
+  LOCK();
+  int ret = libMPI_Iscan(sendbuf, recvbuf, count, datatype, op, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Iscan_epilog(CONST void* sendbuf  MAYBE_UNUSED,

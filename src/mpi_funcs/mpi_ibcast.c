@@ -37,7 +37,10 @@ static int MPI_Ibcast_core(void* buffer,
 			   int root,
 			   MPI_Comm comm,
 			   MPI_Request* r) {
-  return libMPI_Ibcast(buffer, count, datatype, root, comm, r);
+  LOCK();
+  int ret = libMPI_Ibcast(buffer, count, datatype, root, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Ibcast_epilog(void* buffer  MAYBE_UNUSED,

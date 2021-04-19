@@ -41,7 +41,10 @@ static int MPI_Iallgather_core(CONST void* sendbuf,
 			       MPI_Datatype recvtype,
                                MPI_Comm comm,
 			       MPI_Request* r) {
-  return libMPI_Iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, r);
+  LOCK();
+  int ret = libMPI_Iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Iallgather_epilog(CONST void  * sendbuf MAYBE_UNUSED,

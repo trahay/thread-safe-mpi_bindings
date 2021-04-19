@@ -30,7 +30,9 @@ static int MPI_Cancel_core(MPI_Request* request) {
 int MPI_Cancel(MPI_Request* req) {
   FUNCTION_ENTRY;
   MPI_Cancel_prolog((MPI_Fint*)req);
+  LOCK();
   int ret = MPI_Cancel_core(req);
+  UNLOCK();
   FUNCTION_EXIT;
   return ret;
 }

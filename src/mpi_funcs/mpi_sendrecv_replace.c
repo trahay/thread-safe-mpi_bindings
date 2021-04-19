@@ -41,8 +41,11 @@ static int MPI_Sendrecv_replace_core(void* buf,
 				     int recvtag,
 				     MPI_Comm comm,
                                      MPI_Status* status) {
-  return libMPI_Sendrecv_replace(buf, count, type, dest, sendtag, src, recvtag,
+  LOCK();
+  int ret = libMPI_Sendrecv_replace(buf, count, type, dest, sendtag, src, recvtag,
                                  comm, status);
+  UNLOCK();
+  return ret;
 }
 
 

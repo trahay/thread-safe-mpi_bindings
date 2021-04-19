@@ -24,7 +24,10 @@ static int MPI_Testall_core(int count,
 			    MPI_Request* reqs,
 			    int* flag,
                             MPI_Status* s) {
-  return libMPI_Testall(count, reqs, flag, s);
+  LOCK();
+  int ret = libMPI_Testall(count, reqs, flag, s);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Testall_epilog(int count MAYBE_UNUSED,

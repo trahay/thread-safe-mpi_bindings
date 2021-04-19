@@ -30,8 +30,16 @@ static void MPI_Bsend_prolog(CONST void* buf MAYBE_UNUSED,
 
 static int MPI_Bsend_core(CONST void* buf, int count, MPI_Datatype datatype,
                           int dest, int tag, MPI_Comm comm) {
-  return libMPI_Bsend(buf, count, datatype, dest, tag, comm);
-}
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Ibsend(buf, count, datatype, dest, tag, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Bsend(buf, count, datatype, dest, tag, comm);
+  }
+  return ret;
+  }
 
 static void MPI_Bsend_epilog(CONST void* buf MAYBE_UNUSED,
                              int count MAYBE_UNUSED,

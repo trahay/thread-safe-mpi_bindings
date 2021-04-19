@@ -42,7 +42,10 @@ static int MPI_Iallgatherv_core(CONST void* sendbuf ,
                                 MPI_Datatype recvtype,
                                 MPI_Comm comm,
                                 MPI_Request* r) {
-  return libMPI_Iallgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, r);
+  LOCK();
+  int ret = libMPI_Iallgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Iallgatherv_epilog(CONST void* sendbuf  MAYBE_UNUSED,

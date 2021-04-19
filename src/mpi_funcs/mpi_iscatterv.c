@@ -45,8 +45,11 @@ static int MPI_Iscatterv_core(CONST void* sendbuf,
                               int root,
                               MPI_Comm comm,
                               MPI_Request* r) {
-  return libMPI_Iscatterv(sendbuf, sendcnts, displs, sendtype,
+  LOCK();
+  int ret = libMPI_Iscatterv(sendbuf, sendcnts, displs, sendtype,
 			  recvbuf, recvcnt, recvtype, root, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Iscatterv_epilog(CONST void* sendbuf  MAYBE_UNUSED,

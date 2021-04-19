@@ -36,8 +36,16 @@ static int MPI_Reduce_core(CONST void* sendbuf,
 			   MPI_Op op,
 			   int root,
                            MPI_Comm comm) {
-  return libMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
-}
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+  }
+  return ret;
+  }
 
 
 static void MPI_Reduce_epilog(CONST void* sendbuf  MAYBE_UNUSED,

@@ -35,8 +35,29 @@ static int MPI_Waitsome_core(int incount,
 			     int* outcount,
                              int* array_of_indices,
                              MPI_Status* array_of_statuses) {
-  return libMPI_Waitsome(incount, reqs, outcount, array_of_indices,
-                         array_of_statuses);
+  if(should_lock) {
+    /* MPI_Wait is blocking. So we should not call it while holding the lock.
+     * Replace MPI_Wait with an active waiting
+     */
+    uint64_t count = 0;
+    while(1) {
+      int ret = 0;
+      ret = MPI_Testsome(incount, reqs, outcount, array_of_indices, array_of_statuses);
+      if(*outcount > 0)
+	return ret;
+      count++;
+
+      if(count > 10) {      /* sleep a little bit to decrease contention */
+	sched_yield();
+      } else if (count > 100){
+	/* sleep even more */
+	usleep(10);
+      }
+    }
+  } else {
+    return libMPI_Waitsome(incount, reqs, outcount, array_of_indices,
+			   array_of_statuses);
+  }
 }
 
 

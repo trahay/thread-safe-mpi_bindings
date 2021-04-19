@@ -25,7 +25,10 @@ static int MPI_Iprobe_core(int source MAYBE_UNUSED,
 			   MPI_Comm comm MAYBE_UNUSED,
 			   int* flag MAYBE_UNUSED,
                            MPI_Status* status) {
-  return libMPI_Iprobe(source, tag, comm, flag, status);
+  LOCK();
+  int ret = libMPI_Iprobe(source, tag, comm, flag, status);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Iprobe_epilog(int source MAYBE_UNUSED,

@@ -25,7 +25,10 @@ static void MPI_Start_prolog(MPI_Fint* req MAYBE_UNUSED) {
 }
 
 static int MPI_Start_core(MPI_Request* req) {
-  return libMPI_Start(req);
+  LOCK();
+  int ret = libMPI_Start(req);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Start_epilog(MPI_Fint* req MAYBE_UNUSED) {

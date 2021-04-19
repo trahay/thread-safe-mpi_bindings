@@ -40,7 +40,10 @@ static int MPI_Ireduce_core(CONST void* sendbuf,
 			    int root,
 			    MPI_Comm comm,
                             MPI_Request* r) {
-  return libMPI_Ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, r);
+  LOCK();
+  int ret = libMPI_Ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Ireduce_epilog(CONST void* sendbuf  MAYBE_UNUSED,

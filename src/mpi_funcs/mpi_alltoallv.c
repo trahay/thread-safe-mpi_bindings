@@ -37,9 +37,18 @@ static int MPI_Alltoallv_core(CONST void* sendbuf, CONST int* sendcnts,
                               void* recvbuf, CONST int* recvcnts,
                               CONST int* rdispls, MPI_Datatype recvtype,
                               MPI_Comm comm) {
-  return libMPI_Alltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf,
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Ialltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf,
+		      recvcnts, rdispls, recvtype, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Alltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf,
                           recvcnts, rdispls, recvtype, comm);
-}
+  }
+  return ret;
+  }
 
 
 static void MPI_Alltoallv_epilog(CONST void* sendbuf   MAYBE_UNUSED,

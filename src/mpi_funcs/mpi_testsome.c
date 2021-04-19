@@ -25,7 +25,10 @@ static int MPI_Testsome_core(int incount,
 			     int* outcount,
                              int* indexes,
 			     MPI_Status* statuses) {
-  return libMPI_Testsome(incount, reqs, outcount, indexes, statuses);
+  LOCK();
+  int ret = libMPI_Testsome(incount, reqs, outcount, indexes, statuses);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Testsome_epilog(int incount  MAYBE_UNUSED,

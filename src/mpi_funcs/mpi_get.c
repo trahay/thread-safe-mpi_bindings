@@ -39,8 +39,12 @@ static int MPI_Get_core(void* origin_addr,
 			int target_count,
                         MPI_Datatype target_datatype,
 			MPI_Win win) {
-  return libMPI_Get(origin_addr, origin_count, origin_datatype, target_rank,
+  LOCK();
+  /* Warning: get is blocking, so this may lead to a deadlock :/ */
+  int ret = libMPI_Get(origin_addr, origin_count, origin_datatype, target_rank,
                     target_disp, target_count, target_datatype, win);
+  UNLOCK();
+  return ret;
 }
 
 

@@ -44,7 +44,10 @@ static int MPI_Ialltoallv_core(CONST void* sendbuf,
 			       MPI_Datatype recvtype,
                                MPI_Comm comm,
                                MPI_Request* r) {
-  return libMPI_Ialltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm, r);
+  LOCK();
+  int ret = libMPI_Ialltoallv(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Ialltoallv_epilog(CONST void* sendbuf  MAYBE_UNUSED,

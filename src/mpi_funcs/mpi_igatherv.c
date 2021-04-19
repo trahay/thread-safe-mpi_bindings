@@ -46,8 +46,11 @@ static int MPI_Igatherv_core(CONST void* sendbuf,
 			     int root,
 			     MPI_Comm comm,
 			     MPI_Request* r) {
-  return libMPI_Igatherv(sendbuf, sendcnt, sendtype,
+  LOCK();
+  int ret = libMPI_Igatherv(sendbuf, sendcnt, sendtype,
 			 recvbuf, recvcnts, displs, recvtype, root, comm, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Igatherv_epilog(CONST void* sendbuf  MAYBE_UNUSED,

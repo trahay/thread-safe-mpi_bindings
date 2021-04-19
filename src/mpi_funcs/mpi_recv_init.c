@@ -27,7 +27,10 @@ static int MPI_Recv_init_core(void* buffer,
 			      int tag,
 			      MPI_Comm comm,
 			      MPI_Request* req) {
-  return libMPI_Recv_init(buffer, count, type, src, tag, comm, req);
+  LOCK();
+  int ret = libMPI_Recv_init(buffer, count, type, src, tag, comm, req);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Recv_init_epilog(void* buffer MAYBE_UNUSED,

@@ -32,9 +32,18 @@ static void MPI_Alltoall_prolog(CONST void* sendbuf MAYBE_UNUSED,
 static int MPI_Alltoall_core(CONST void* sendbuf, int sendcount,
                              MPI_Datatype sendtype, void* recvbuf, int recvcnt,
                              MPI_Datatype recvtype, MPI_Comm comm) {
-  return libMPI_Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcnt,
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Ialltoall(sendbuf, sendcount, sendtype, recvbuf, recvcnt,
+		     recvtype, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcnt,
                          recvtype, comm);
-}
+  }
+  return ret;
+  }
 
 
 static void MPI_Alltoall_epilog(CONST void* sendbuf MAYBE_UNUSED,

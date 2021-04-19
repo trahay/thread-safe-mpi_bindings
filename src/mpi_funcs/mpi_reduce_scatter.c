@@ -34,8 +34,16 @@ static int MPI_Reduce_scatter_core(CONST void* sendbuf,
 				   MPI_Datatype datatype,
 				   MPI_Op op,
 				   MPI_Comm comm) {
-  return libMPI_Reduce_scatter(sendbuf, recvbuf, recvcnts, datatype, op, comm);
-}
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Ireduce_scatter(sendbuf, recvbuf, recvcnts, datatype, op, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Reduce_scatter(sendbuf, recvbuf, recvcnts, datatype, op, comm);
+  }
+  return ret;
+  }
 
 
 static void MPI_Reduce_scatter_epilog(CONST void* sendbuf MAYBE_UNUSED,

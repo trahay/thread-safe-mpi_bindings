@@ -27,7 +27,10 @@ static void MPI_Ibarrier_prolog(MPI_Comm comm MAYBE_UNUSED,
 }
 
 static int MPI_Ibarrier_core(MPI_Comm c, MPI_Request* r) {
-  return libMPI_Ibarrier(c, r);
+  LOCK();
+  int ret = libMPI_Ibarrier(c, r);
+  UNLOCK();
+  return ret;
 }
 
 static void MPI_Ibarrier_epilog(MPI_Comm c MAYBE_UNUSED,

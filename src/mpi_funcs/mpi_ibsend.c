@@ -36,7 +36,10 @@ static int MPI_Ibsend_core(CONST void* buf,
 			   int tag,
 			   MPI_Comm comm,
 			   MPI_Request* req) {
-  return libMPI_Ibsend(buf, count, datatype, dest, tag, comm, req);
+  LOCK();
+  int ret = libMPI_Ibsend(buf, count, datatype, dest, tag, comm, req);
+  UNLOCK();
+  return ret;
 }
 
 

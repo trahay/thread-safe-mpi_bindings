@@ -37,9 +37,18 @@ static int MPI_Gather_core(CONST void* sendbuf,
 			   int recvcount,
 			   MPI_Datatype recvtype,
 			   int root, MPI_Comm comm) {
-  return libMPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, recvcount, recvtype,
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Igather(sendbuf, sendcnt, sendtype, recvbuf, recvcount, recvtype,
+		   root, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Gather(sendbuf, sendcnt, sendtype, recvbuf, recvcount, recvtype,
                        root, comm);
-}
+  }
+  return ret;
+  }
 
 
 static void MPI_Gather_epilog(CONST void* sendbuf  MAYBE_UNUSED,

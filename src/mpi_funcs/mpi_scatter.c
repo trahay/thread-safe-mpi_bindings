@@ -37,9 +37,18 @@ static int MPI_Scatter_core(CONST void* sendbuf,
 			    int recvcnt,
 			    MPI_Datatype recvtype,
 			    int root, MPI_Comm comm) {
-  return libMPI_Scatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype,
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Iscatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype,
+		    root, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Scatter(sendbuf, sendcnt, sendtype, recvbuf, recvcnt, recvtype,
                         root, comm);
-}
+  }
+  return ret;
+  }
 
 
 static void MPI_Scatter_epilog(CONST void* sendbuf  MAYBE_UNUSED,

@@ -36,7 +36,10 @@ static int MPI_Irsend_core(CONST void* buf,
 			   int tag,
 			   MPI_Comm comm,
 			   MPI_Request* req) {
-  return libMPI_Irsend(buf, count, datatype, dest, tag, comm, req);
+  LOCK();
+  int ret = libMPI_Irsend(buf, count, datatype, dest, tag, comm, req);
+  UNLOCK();
+  return ret;
 }
 
 

@@ -31,7 +31,29 @@ static int MPI_Waitany_core(int count,
 			    MPI_Request* reqs,
 			    int* index,
                             MPI_Status* status) {
-  return libMPI_Waitany(count, reqs, index, status);
+  if(should_lock) {
+    /* MPI_Wait is blocking. So we should not call it while holding the lock.
+     * Replace MPI_Wait with an active waiting
+     */
+    uint64_t count = 0;
+    while(1) {
+      int ret = 0;
+      int flag;
+      ret = MPI_Testany(count, reqs, index, &flag, status);
+      if(flag)
+	return ret;
+      count++;
+
+      if(count > 10) {      /* sleep a little bit to decrease contention */
+	sched_yield();
+      } else if (count > 100){
+	/* sleep even more */
+	usleep(10);
+      }
+    }
+  } else {
+    return libMPI_Waitany(count, reqs, index, status);
+  }
 }
 
 

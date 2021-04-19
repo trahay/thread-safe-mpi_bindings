@@ -30,7 +30,15 @@ static void MPI_Allreduce_prolog(CONST void* sendbuf MAYBE_UNUSED,
 
 static int MPI_Allreduce_core(CONST void* sendbuf, void* recvbuf, int count,
                               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm) {
-  return libMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+  int ret = 0;
+  if(should_lock) {
+    MPI_Request req;
+    libMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, &req);
+    ret = MPI_Wait(&req, MPI_STATUS_IGNORE);
+  } else {
+    ret = libMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+  }
+  return ret;
 }
 
 static void MPI_Allreduce_epilog(CONST void* sendbuf MAYBE_UNUSED,
