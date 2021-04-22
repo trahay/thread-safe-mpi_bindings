@@ -49,7 +49,7 @@ $mpi_interceptor -s  ./mpi_ring_mt
 LD_PRELOAD=/home/trahay/Soft/opt/thread-safe-mpi_bindings/install/lib/libmpi-interceptor.so MPII_VERBOSE=0 MPII_FORCE_THREAD_SAFETY=0 MPII_DISABLE_THREAD_SAFETY=0 ./mpi_ring_mt
 ```
 
-## Cheching the application concurrency
+## Checking the application concurrency
 
 The `-c` option allows to check if the application performs concurrent calls to MPI functions, whether it initiliazed MPI with MPI_THREAD_MULTIPLE or not:
 
