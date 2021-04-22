@@ -24,6 +24,11 @@
 
 int should_lock = 0;
 pthread_mutex_t mpi_lock;
+extern __thread int recursion_shield = 0;
+
+_Atomic int current_mpi_calls = 0;
+volatile pthread_t current_mpi_call_thread = 0;
+volatile const char* current_mpi_call_function = NULL;
 
 struct mpii_info mpii_infos; /* information on the local process */
 
@@ -890,26 +895,43 @@ static void load_settings() {
   char* mpii_verbose = getenv("MPII_VERBOSE");
   if(mpii_verbose) {
     mpii_infos.settings.verbose = atoi(mpii_verbose);
-    printf("[MPII] Debug level: %d\n", mpii_infos.settings.verbose);
   }
 
   char* mpii_force_thread_safety = getenv("MPII_FORCE_THREAD_SAFETY");
   if(mpii_force_thread_safety) {
     mpii_infos.settings.force_thread_safety = atoi(mpii_force_thread_safety);
-    printf("[MPII] Force thread-safety: %d\n", mpii_infos.settings.force_thread_safety);
   }
 
   char* mpii_disable_thread_safety = getenv("MPII_DISABLE_THREAD_SAFETY");
   if(mpii_disable_thread_safety) {
     mpii_infos.settings.disable_thread_safety = atoi(mpii_disable_thread_safety);
-    printf("[MPII] Disable thread-safety: %d\n", mpii_infos.settings.disable_thread_safety);
   }
 
+  char* mpii_check_concurrency = getenv("MPII_CHECK_CONCURRENCY");
+  if(mpii_check_concurrency) {
+    mpii_infos.settings.check_concurrency = atoi(mpii_check_concurrency);
+  }
+
+  char* mpii_abort_on_concurrency_check_failure = getenv("MPII_ABORT_ON_CONCURRENCY_CHECK_FAILURE");
+  if(mpii_abort_on_concurrency_check_failure) {
+    mpii_infos.settings.abort_on_concurrency_check_failure = atoi(mpii_abort_on_concurrency_check_failure);
+  }
+
+  printf("----------------------\n");
+  printf("MPII settings:\n");
+  printf("[MPII] Debug level: %d\n", mpii_infos.settings.verbose);
+  printf("[MPII] Force thread-safety: %d\n", mpii_infos.settings.force_thread_safety);
+  printf("[MPII] Disable thread-safety: %d\n", mpii_infos.settings.disable_thread_safety);
+  printf("[MPII] Check concurrency: %d\n", mpii_infos.settings.check_concurrency);
+  printf("[MPII] Abort on concurrency check_failure: %d\n", mpii_infos.settings.abort_on_concurrency_check_failure);
+  printf("----------------------\n");
+  
   if( mpii_infos.settings.force_thread_safety &&
       mpii_infos.settings.disable_thread_safety) {
     fprintf(stderr, "Error: option MPII_FORCE_THREAD_SAFETY conflicts with MPII_DISABLE_THREAD_SAFETY\n");
     abort();
   }
+
 }
 
 void mpii_init(void) __attribute__((constructor));

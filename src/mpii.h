@@ -10,8 +10,14 @@
 #include "mpii_config.h"
 #include <pthread.h>
 
+/* should we protect MPI from concurrent accesses ? */
 extern int should_lock;
+/* mutex used for protecting MPI from concurren calls */
 extern pthread_mutex_t mpi_lock;
+
+/* prevent the library from processing recursive MPI calls */
+extern __thread int recursion_shield;
+
 #define LOCK() do {				\
     if(should_lock) {				\
       pthread_mutex_lock(&mpi_lock);		\
@@ -46,19 +52,68 @@ struct mpii_info {
 /* information on the local process */
 extern struct mpii_info mpii_infos;
 
-#if 1
-#define FUNCTION_ENTRY_(fname) MPII_PRINTF(2, "[%d/%d]\tEntering %s\n", mpii_infos.rank, mpii_infos.size, fname);
-#define FUNCTION_EXIT_(fname)  MPII_PRINTF(2, "[%d/%d]\tLeaving %s\n", mpii_infos.rank, mpii_infos.size, fname);
-#else
-#define FUNCTION_ENTRY_(fname) (void)0
-#define FUNCTION_EXIT_(fname)  (void)0
-#endif
 
-#define MPII_PRINTF(_debug_level_, ...)            \
-  {                                               \
-    if (mpii_infos.settings.verbose >= _debug_level_) \
-      fprintf(stderr, __VA_ARGS__);               \
-  }
+/* number of pending mpi calls. If MPI is not thread safe, this should
+   always be 0 or 1 */
+extern _Atomic int current_mpi_calls;
+/* which thread is currently calling MPI ? */
+extern volatile pthread_t current_mpi_call_thread;
+/* which MPI function is currently being called ? */
+extern volatile const char* current_mpi_call_function;
+
+/* When entering an MPI function, check if another thread is currently
+   using MPI */
+#define CHECK_CONCURRENCY_ENTER_MPI(fname) do {				\
+    if(mpii_infos.settings.check_concurrency != 0) {			\
+      int nb_calls = ++current_mpi_calls;				\
+      if( nb_calls != 1) {						\
+	MPII_PRINTF(0, "Warning: thread %lx calls %s while thread %lx calls %s! %d\n", \
+		    pthread_self(), fname,				\
+		    current_mpi_call_thread, current_mpi_call_function, nb_calls); \
+	if(mpii_infos.settings.abort_on_concurrency_check_failure) abort(); \
+      }									\
+      current_mpi_call_thread = pthread_self();				\
+      current_mpi_call_function = fname;				\
+    }									\
+  } while(0)
+
+/* When leaving an MPI function, check if another thread is currently
+   using MPI */
+#define CHECK_CONCURRENCY_LEAVE_MPI(fname) do {				\
+    if(mpii_infos.settings.check_concurrency != 0) {			\
+      int nb_calls = --current_mpi_calls;				\
+      if( nb_calls != 0) {						\
+	MPII_PRINTF(0, "Warning: thread %lx leaves %s while thread %lx is in %s! %d\n", \
+		    pthread_self(), fname,				\
+		    current_mpi_call_thread, current_mpi_call_function, nb_calls); \
+	if(mpii_infos.settings.abort_on_concurrency_check_failure) abort(); \
+      }									\
+      current_mpi_call_thread = 0;					\
+      current_mpi_call_function = NULL;					\
+    }									\
+  } while(0)
+
+/* called when entering an MPI function */
+#define FUNCTION_ENTRY_(fname) do {					\
+    if(recursion_shield++ == 0) {					\
+      CHECK_CONCURRENCY_ENTER_MPI(fname);				\
+      MPII_PRINTF(2, "[%d/%d]\tEntering %s\n", mpii_infos.rank, mpii_infos.size, fname); \
+    }									\
+  } while(0)
+
+/* called when leaving an MPI function */
+#define FUNCTION_EXIT_(fname)  do {					\
+    if(--recursion_shield == 0) {					\
+      CHECK_CONCURRENCY_LEAVE_MPI(fname);				\
+      MPII_PRINTF(2, "[%d/%d]\tLeaving %s\n", mpii_infos.rank, mpii_infos.size, fname);	\
+    }									\
+  } while(0)
+
+#define MPII_PRINTF(_debug_level_, ...)			\
+    {							\
+      if (mpii_infos.settings.verbose >= _debug_level_) \
+	fprintf(stderr, __VA_ARGS__);			\
+    }
 
 #define FUNCTION_ENTRY FUNCTION_ENTRY_(__func__);
 #define FUNCTION_EXIT  FUNCTION_EXIT_(__func__);

@@ -22,6 +22,8 @@ static struct argp_option options[] = {
 	{"force", 'f', 0, 0, "Force the use of thread-safety (even if MPI already supports it)" },
 	{"disable", 'd', 0, 0, "Disable the use of thread-safety" },
 	{"show", 's', 0, 0, "Show the LD_PRELOAD command to run the application with instrumentation" },
+	{"check", 'c', 0, 0, "Check if the application performs concurrent MPI calls" },
+	{"check-abort", 'C', 0, 0, "Abort if the concurrency check fails" },
 	{0}
 };
 
@@ -42,6 +44,14 @@ static error_t parse_opt(int key, char *arg, struct argp_state *state) {
     break;
   case 'd':
     settings->disable_thread_safety = 1;
+    break;
+  case 'c':
+    settings->check_concurrency = 1;
+    break;
+  case 'C':
+    /* automatically enable concurrency checks */
+    settings->abort_on_concurrency_check_failure = 1;
+    settings->check_concurrency = 1;
     break;
 
   case ARGP_KEY_NO_ARGS:
@@ -66,8 +76,10 @@ int main(int argc, char**argv) {
   // Default values
   settings.verbose = SETTINGS_VERBOSE_DEFAULT;
   settings.show = SETTINGS_SHOW_DEFAULT;
+  settings.check_concurrency = SETTINGS_CHECK_CONCURRENCY_DEFAULT;
   settings.force_thread_safety = SETTINGS_FORCE_THREAD_SAFETY_DEFAULT;
   settings.disable_thread_safety = SETTINGS_DISABLE_THREAD_SAFETY_DEFAULT;
+  settings.abort_on_concurrency_check_failure = SETTINGS_ABORT_ON_CONCURRENCY_CHECK_FAILURE_DEFAULT;
 
   // first divide argv between mpii options and target file and
   // options optionnal todo : better target detection : it should be
@@ -105,17 +117,21 @@ int main(int argc, char**argv) {
   }while(0)
   
   setenv_int("MPII_VERBOSE", settings.verbose, 1);
+  setenv_int("MPII_CHECK_CONCURRENCY", settings.check_concurrency, 1);
   setenv_int("MPII_FORCE_THREAD_SAFETY", settings.force_thread_safety, 1);
   setenv_int("MPII_DISABLE_THREAD_SAFETY", settings.disable_thread_safety, 1);
+  setenv_int("MPII_ABORT_ON_CONCURRENCY_CHECK_FAILURE", settings.abort_on_concurrency_check_failure, 1);
 
 
   if(settings.show) {
     setenv("LD_PRELOAD", ld_preload, 1);
-    printf("LD_PRELOAD=%s MPII_VERBOSE=%d MPII_FORCE_THREAD_SAFETY=%d MPII_DISABLE_THREAD_SAFETY=%d",
+    printf("LD_PRELOAD=%s MPII_VERBOSE=%d MPII_FORCE_THREAD_SAFETY=%d MPII_DISABLE_THREAD_SAFETY=%d MPII_CHECK_CONCURRENCY=%d MPII_ABORT_ON_CONCURRENCY_CHECK_FAILURE=%d",
 	   ld_preload,
 	   settings.verbose,
 	   settings.force_thread_safety,
-	   settings.disable_thread_safety);;
+	   settings.disable_thread_safety,
+	   settings.check_concurrency,
+	   settings.abort_on_concurrency_check_failure);
 
     for(int i=target_i; i<argc; i++)
       printf(" %s", argv[i]);

@@ -47,12 +47,16 @@
 #define SETTINGS_SHOW_DEFAULT 0
 #define SETTINGS_FORCE_THREAD_SAFETY_DEFAULT 0
 #define SETTINGS_DISABLE_THREAD_SAFETY_DEFAULT 0
+#define SETTINGS_CHECK_CONCURRENCY_DEFAULT 0
+#define SETTINGS_ABORT_ON_CONCURRENCY_CHECK_FAILURE_DEFAULT 1
 
 struct mpii_settings {
   int verbose;
   int show;
   int force_thread_safety;
   int disable_thread_safety;
+  int check_concurrency;
+  int abort_on_concurrency_check_failure;
 };
 
 #define STRING_LENGTH 4096
