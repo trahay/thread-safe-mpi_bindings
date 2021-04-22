@@ -36,7 +36,10 @@ The following options can be passed to MPI Interceptor:
   + Disable thread-safety (default: no) -- Disable the library thread-safety mecanism. It can be used for testing the library instrumentation.
 - `-s` or `--show`
   + Show the LD_PRELOAD command to run the application with instrumentation (default: no)
-
+- `-c`, `--check`
+  + Check if the application performs concurrent MPI calls (default: no)
+- `-C`, `--check-abort`
+  + Abort if the concurrency check fails (default: no) 
 
 
 If you need to tweak the environment, you can also run `mpi_interceptor -s` in order to get the environment variables that need to be set to use the tool:
@@ -44,6 +47,16 @@ If you need to tweak the environment, you can also run `mpi_interceptor -s` in o
 ```
 $mpi_interceptor -s  ./mpi_ring_mt
 LD_PRELOAD=/home/trahay/Soft/opt/thread-safe-mpi_bindings/install/lib/libmpi-interceptor.so MPII_VERBOSE=0 MPII_FORCE_THREAD_SAFETY=0 MPII_DISABLE_THREAD_SAFETY=0 ./mpi_ring_mt
+```
+
+## Cheching the application concurrency
+
+The `-c` option allows to check if the application performs concurrent calls to MPI functions, whether it initiliazed MPI with MPI_THREAD_MULTIPLE or not:
+
+```
+$ mpirun  -np 2 ../install/bin/mpi_interceptor -C ./mpi_ring_mt
+[...]
+[P0T1]  Warning: thread 1 calls MPI_Send while thread 0 calls MPI_Recv! Concurrency_level: 2
 ```
 
 ## Status of the current implementation

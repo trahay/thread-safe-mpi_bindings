@@ -27,8 +27,14 @@ pthread_mutex_t mpi_lock;
 extern __thread int recursion_shield = 0;
 
 _Atomic int current_mpi_calls = 0;
-volatile pthread_t current_mpi_call_thread = 0;
+_Atomic int current_mpi_call_thread = 0;
 volatile const char* current_mpi_call_function = NULL;
+
+/* rank of the current thread */
+__thread int thread_rank = -1;
+
+/* number of threads */
+_Atomic int nb_threads = 0;
 
 struct mpii_info mpii_infos; /* information on the local process */
 

@@ -57,9 +57,15 @@ extern struct mpii_info mpii_infos;
    always be 0 or 1 */
 extern _Atomic int current_mpi_calls;
 /* which thread is currently calling MPI ? */
-extern volatile pthread_t current_mpi_call_thread;
+extern _Atomic int current_mpi_call_thread;
 /* which MPI function is currently being called ? */
 extern volatile const char* current_mpi_call_function;
+
+/* rank of the current thread */
+extern __thread int thread_rank;
+/* number of threads */
+extern _Atomic int nb_threads;
+
 
 /* When entering an MPI function, check if another thread is currently
    using MPI */
@@ -67,12 +73,13 @@ extern volatile const char* current_mpi_call_function;
     if(mpii_infos.settings.check_concurrency != 0) {			\
       int nb_calls = ++current_mpi_calls;				\
       if( nb_calls != 1) {						\
-	MPII_PRINTF(0, "Warning: thread %lx calls %s while thread %lx calls %s! %d\n", \
-		    pthread_self(), fname,				\
+	MPII_PRINTF(0, "[P%dT%d]\tWarning: thread %d calls %s while thread %d calls %s! Concurrency_level: %d\n", \
+		    mpii_infos.rank, thread_rank,			\
+		    thread_rank, fname,					\
 		    current_mpi_call_thread, current_mpi_call_function, nb_calls); \
 	if(mpii_infos.settings.abort_on_concurrency_check_failure) abort(); \
       }									\
-      current_mpi_call_thread = pthread_self();				\
+      current_mpi_call_thread = thread_rank;				\
       current_mpi_call_function = fname;				\
     }									\
   } while(0)
@@ -83,8 +90,9 @@ extern volatile const char* current_mpi_call_function;
     if(mpii_infos.settings.check_concurrency != 0) {			\
       int nb_calls = --current_mpi_calls;				\
       if( nb_calls != 0) {						\
-	MPII_PRINTF(0, "Warning: thread %lx leaves %s while thread %lx is in %s! %d\n", \
-		    pthread_self(), fname,				\
+	MPII_PRINTF(0, "[P%dT%d]\tWarning: thread %d leaves %s while thread %d is in %s! Concurrency_level: %d\n", \
+		    mpii_infos.rank, thread_rank,			\
+		    thread_rank, fname,					\
 		    current_mpi_call_thread, current_mpi_call_function, nb_calls); \
 	if(mpii_infos.settings.abort_on_concurrency_check_failure) abort(); \
       }									\
@@ -96,6 +104,7 @@ extern volatile const char* current_mpi_call_function;
 /* called when entering an MPI function */
 #define FUNCTION_ENTRY_(fname) do {					\
     if(recursion_shield++ == 0) {					\
+      if(thread_rank < 0) thread_rank = nb_threads++;			\
       CHECK_CONCURRENCY_ENTER_MPI(fname);				\
       MPII_PRINTF(2, "[%d/%d]\tEntering %s\n", mpii_infos.rank, mpii_infos.size, fname); \
     }									\
